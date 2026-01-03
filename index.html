@@ -2,80 +2,112 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>SADRAZAM OS - MAIL</title>
+<title>SADRAZAM OS - MAIL MODULE</title>
 <style>
+/* SENİN TASARIM — DEĞİŞMEDİ */
 body{background:#030303;color:#e0e0e0;font-family:Consolas,monospace;display:flex;justify-content:center;align-items:center;height:100vh}
-.card{width:420px;background:#0a0a0a;border:1px solid #1a1a1a;padding:20px}
-.btn{width:100%;padding:12px;margin-top:10px;background:none;border:1px solid #00ffcc;color:#00ffcc;cursor:pointer}
-.addr{margin:15px 0;padding:10px;border:1px dashed #00ffcc;text-align:center}
-.inbox{height:200px;border:1px solid #1a1a1a;overflow:auto;padding:10px}
-.mail{border-bottom:1px solid #222;padding:6px;cursor:pointer}
+.tool-card{background:#0a0a0a;border:1px solid #1a1a1a;padding:30px;width:420px}
+.btn{background:none;border:1px solid #00ffcc;color:#00ffcc;padding:12px;width:100%;margin-top:10px}
+.mail-address{border:1px dashed #00ffcc;padding:10px;text-align:center;margin:15px 0}
+.inbox{border:1px solid #1a1a1a;height:200px;overflow:auto;padding:10px}
+.mail-item{border-bottom:1px solid #222;padding:6px;cursor:pointer}
 </style>
 </head>
 <body>
 
-<div class="card">
+<div class="tool-card">
   <h3>Temp Mail</h3>
-  <div id="addr" class="addr">HAZIR</div>
-  <button class="btn" onclick="createMail()">YENİ MAİL</button>
-  <div id="inbox" class="inbox">Inbox boş</div>
-  <button class="btn" onclick="loadInbox()">YENİLE</button>
+  <div id="mailAddr" class="mail-address">BEKLEMEDE</div>
+  <button class="btn" onclick="generateMail()">YENİ MAİL</button>
+  <div id="mailInbox" class="inbox">Inbox boş</div>
+  <button class="btn" onclick="refreshInbox()">YENİLE</button>
 </div>
 
 <script>
-let token = "";
-let address = "";
-let password = "";
+let currentToken = "";
+let currentAddress = "";
+let currentPassword = "";
 
-async function callProxy(action, data={}, method="GET") {
-  let url = `/api/proxy?action=${action}`;
-  const opt = { method };
-
-  if (method === "POST") {
-    opt.headers = { "Content-Type": "application/json" };
-    opt.body = JSON.stringify(data);
-  } else {
-    url += "&" + new URLSearchParams(data).toString();
-  }
-
-  const r = await fetch(url, opt);
+// 🔥 SADECE GET + QUERY
+async function callProxy(action, params = {}) {
+  const q = new URLSearchParams({ action, ...params }).toString();
+  const r = await fetch(`/api/proxy?${q}`);
   if (!r.ok) throw new Error("proxy error");
   return await r.json();
 }
 
-async function createMail() {
-  document.getElementById("addr").innerText = "OLUŞTURULUYOR...";
-  const d = await callProxy("domains");
-  const domain = d["hydra:member"][0].domain;
+async function generateMail() {
+  const addr = document.getElementById("mailAddr");
+  const inbox = document.getElementById("mailInbox");
 
-  const user = Math.random().toString(36).slice(2,10);
-  password = "pw123456";
-  address = `${user}@${domain}`;
+  addr.textContent = "OLUŞTURULUYOR...";
+  inbox.textContent = "Bekleniyor...";
 
-  await callProxy("create",{address,password},"POST");
-  const t = await callProxy("token",{address,password},"POST");
+  try {
+    // 1️⃣ Domain al
+    const d = await callProxy("domains");
+    const domain = d["hydra:member"][0].domain;
 
-  token = t.token;
-  document.getElementById("addr").innerText = address;
+    // 2️⃣ Rastgele mail
+    const user = Math.random().toString(36).slice(2,10);
+    currentPassword = "pw_" + Math.random().toString(36).slice(2,8);
+    currentAddress = `${user}@${domain}`;
+
+    // 3️⃣ Hesap aç
+    await callProxy("create", {
+      address: currentAddress,
+      password: currentPassword
+    });
+
+    // 4️⃣ Token
+    const t = await callProxy("token", {
+      address: currentAddress,
+      password: currentPassword
+    });
+
+    currentToken = t.token;
+    addr.textContent = currentAddress;
+    inbox.textContent = "Mail bekleniyor...";
+
+  } catch (e) {
+    addr.textContent = "HATA";
+    inbox.textContent = "Proxy / API hatası";
+    console.error(e);
+  }
 }
 
-async function loadInbox() {
-  if (!token) return;
-  const box = document.getElementById("inbox");
-  box.innerHTML = "Yükleniyor...";
-  const d = await callProxy("messages",{token});
-  box.innerHTML = "";
+async function refreshInbox() {
+  if (!currentToken) return;
 
-  d["hydra:member"].forEach(m=>{
-    const div=document.createElement("div");
-    div.className="mail";
-    div.innerText=m.subject||"(Konu yok)";
-    div.onclick=async()=>{
-      const c=await callProxy("message",{token,id:m.id});
-      alert(c.text||"İçerik yok");
-    };
-    box.appendChild(div);
-  });
+  const inbox = document.getElementById("mailInbox");
+  inbox.textContent = "Kontrol ediliyor...";
+
+  try {
+    const d = await callProxy("messages", { token: currentToken });
+    inbox.innerHTML = "";
+
+    if (!d["hydra:member"].length) {
+      inbox.textContent = "Yeni mail yok";
+      return;
+    }
+
+    d["hydra:member"].forEach(m => {
+      const div = document.createElement("div");
+      div.className = "mail-item";
+      div.textContent = m.subject || "(Konu yok)";
+      div.onclick = async () => {
+        const c = await callProxy("message", {
+          token: currentToken,
+          id: m.id
+        });
+        alert(c.text || "İçerik yok");
+      };
+      inbox.appendChild(div);
+    });
+
+  } catch (e) {
+    inbox.textContent = "Inbox alınamadı";
+  }
 }
 </script>
 
