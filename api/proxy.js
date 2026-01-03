@@ -1,31 +1,31 @@
-export default async function (req, res) {
-    // CORS Başlıklarını ekleyerek tarayıcıyı rahatlatıyoruz
-    res.setHeader('Access-Control-Allow-Credentials', true);
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-    res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
+const fetch = require('node-fetch');
 
-    if (req.method === 'OPTIONS') {
-        res.status(200).end();
-        return;
-    }
+module.exports = async (req, res) => {
+  // CORS başlıkları (Tarayıcıyı ikna etmek için)
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-    const { endpoint, method, body, token } = req.body;
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
 
-    try {
-        const mailRes = await fetch(`https://api.mail.tm${endpoint}`, {
-            method: method || 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/ld+json',
-                'Authorization': token ? `Bearer ${token}` : ''
-            },
-            body: body ? JSON.stringify(body) : null
-        });
+  const { endpoint, method, body, token } = req.body;
 
-        const data = await mailRes.json();
-        res.status(200).json(data);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-}
+  try {
+    const response = await fetch(`https://api.mail.tm${endpoint}`, {
+      method: method || 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/ld+json',
+        'Authorization': token ? `Bearer ${token}` : ''
+      },
+      body: body ? JSON.stringify(body) : null
+    });
+
+    const data = await response.json();
+    res.status(200).json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
