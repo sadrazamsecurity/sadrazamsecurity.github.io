@@ -9,87 +9,77 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { action } = req.query;
+    const action = req.query.action;
+
+    if (!action) {
+      return res.status(400).json({ error: "action missing" });
+    }
 
     let url = "";
-    let options = {
-      method: "GET",
-      headers: {
-        "Accept": "application/ld+json"
-      }
-    };
+    let options = { method: "GET", headers: {} };
 
-    // 1️⃣ Domain listesi
+    // Body (POST için)
+    let body = {};
+    if (req.method === "POST") {
+      body = req.body || {};
+    }
+
+    // DOMAINS
     if (action === "domains") {
       url = "https://api.mail.tm/domains";
     }
 
-    // 2️⃣ Mail oluştur
+    // CREATE ACCOUNT
     else if (action === "create") {
-      const { address, password } = req.query;
-
       url = "https://api.mail.tm/accounts";
-      options = {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/ld+json"
-        },
-        body: JSON.stringify({ address, password })
-      };
+      options.method = "POST";
+      options.headers["Content-Type"] = "application/json";
+      options.body = JSON.stringify(body);
     }
 
-    // 3️⃣ Token al
+    // TOKEN
     else if (action === "token") {
-      const { address, password } = req.query;
-
       url = "https://api.mail.tm/token";
-      options = {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
-        body: JSON.stringify({ address, password })
-      };
+      options.method = "POST";
+      options.headers["Content-Type"] = "application/json";
+      options.body = JSON.stringify(body);
     }
 
-    // 4️⃣ Inbox
+    // MESSAGES
     else if (action === "messages") {
-      const { token } = req.query;
+      const token = req.query.token;
+      if (!token) return res.status(400).json({ error: "token missing" });
 
       url = "https://api.mail.tm/messages";
       options.headers.Authorization = `Bearer ${token}`;
     }
 
-    // 5️⃣ Tek mail içeriği
+    // SINGLE MESSAGE
     else if (action === "message") {
       const { token, id } = req.query;
+      if (!token || !id) {
+        return res.status(400).json({ error: "token or id missing" });
+      }
 
       url = `https://api.mail.tm/messages/${id}`;
       options.headers.Authorization = `Bearer ${token}`;
     }
 
     else {
-      return res.status(400).json({ error: "Geçersiz action" });
+      return res.status(400).json({ error: "invalid action" });
     }
 
-    const response = await fetch(url, options);
-    const text = await response.text();
+    const r = await fetch(url, options);
+    const text = await r.text();
 
-    // JSON-LD + JSON güvenli parse
     try {
-      const json = JSON.parse(text);
-      return res.status(response.status).json(json);
+      return res.status(r.status).json(JSON.parse(text));
     } catch {
-      return res.status(response.status).send(text);
+      return res.status(r.status).send(text);
     }
 
   } catch (err) {
-    console.error("MAIL.TM PROXY ERROR:", err);
-    return res.status(500).json({
-      error: "Server error",
-      message: err.message
-    });
+    console.error("PROXY ERROR:", err);
+    return res.status(500).json({ error: err.message });
   }
- }
+    }
