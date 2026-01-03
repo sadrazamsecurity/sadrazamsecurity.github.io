@@ -1,18 +1,19 @@
 export default async function handler(req, res) {
-    // CORS Başlıkları (Tarayıcı engeline karşı)
+    // CORS Başlıkları
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-    // Tarayıcı bazen ön kontrol (OPTIONS) yapar, ona onay veriyoruz
+    // OPTIONS isteğine (ön kontrol) hızlı yanıt
     if (req.method === 'OPTIONS') {
-        return res.status(200).end();
+        res.status(200).end();
+        return;
     }
 
     const { endpoint, method, body, token } = req.body;
 
     try {
-        // Mail.tm'e giden asıl istek
+        // Vercel'in kendi dahili fetch'ini kullanıyoruz (Kütüphane istemez)
         const response = await fetch(`https://api.mail.tm${endpoint}`, {
             method: method || 'GET',
             headers: {
@@ -26,8 +27,6 @@ export default async function handler(req, res) {
         const data = await response.json();
         res.status(200).json(data);
     } catch (error) {
-        // Hata olursa loglara yazdırıyoruz
-        console.error("Proxy Hatası:", error.message);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: "Sunucu Hatası: " + error.message });
     }
-          }
+}
