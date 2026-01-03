@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Temp Mail - 1secmail</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      background: #0f0f0f;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    button {
+      padding: 12px 18px;
+      font-size: 16px;
+      background: #1e90ff;
+      border: none;
+      color: #fff;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    #mail {
+      margin-top: 10px;
+      font-weight: bold;
+      word-break: break-all;
+    }
+    ul {
+      margin-top: 20px;
+      padding-left: 18px;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Geçici Mail (1secmail)</h2>
+<button onclick="createMail()">Mail Oluştur</button>
+
+<div id="mail"></div>
+<ul id="messages"></ul>
+
+<script>
+let login = "";
+let domain = "1secmail.com";
+
+function randomLogin() {
+  return Math.random().toString(36).substring(2, 10);
+}
+
+async function createMail() {
+  login = randomLogin();
+  document.getElementById("mail").innerText = login + "@" + domain;
+  loadMessages();
+}
+
+async function loadMessages() {
+  if (!login) return;
+
+  const url = `https://www.1secmail.com/api/v1/?action=getMessages&login=${login}&domain=${domain}`;
+  const res = await fetch(url);
+  const data = await res.json();
+
+  const list = document.getElementById("messages");
+  list.innerHTML = "";
+
+  data.forEach(m => {
+    const li = document.createElement("li");
+    li.textContent = m.from + " | " + m.subject;
+    li.onclick = () => readMessage(m.id);
+    list.appendChild(li);
+  });
+}
+
+async function readMessage(id) {
+  const url = `https://www.1secmail.com/api/v1/?action=readMessage&login=${login}&domain=${domain}&id=${id}`;
+  const res = await fetch(url);
+  const msg = await res.json();
+
+  alert(
+    "From: " + msg.from + "\n\n" +
+    "Subject: " + msg.subject + "\n\n" +
+    msg.textBody
+  );
+}
+
+// otomatik yenile (15 sn)
+setInterval(loadMessages, 15000);
+</script>
+
+</body>
+</html>
