@@ -4,47 +4,68 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  // Preflight
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
 
   try {
-    // ÖRNEK: frontend ?url= şeklinde API gönderir
-    const targetUrl = req.query.url;
+    const { action, address, password, token } = req.query;
 
-    if (!targetUrl) {
-      return res.status(400).json({
-        error: "url parametresi eksik"
-      });
+    let url = "";
+    let options = { method: "GET", headers: {} };
+
+    // 1️⃣ Domainleri al
+    if (action === "domains") {
+      url = "https://api.mail.tm/domains";
     }
 
-    const response = await fetch(targetUrl, {
-      method: "GET",
-      headers: {
-        "User-Agent": "Mozilla/5.0",
-        "Accept": "application/json"
-      }
-    });
-
-    if (!response.ok) {
-      const text = await response.text();
-      return res.status(response.status).json({
-        error: "Hedef API hata verdi",
-        status: response.status,
-        body: text
-      });
+    // 2️⃣ Mail oluştur
+    else if (action === "create") {
+      url = "https://api.mail.tm/accounts";
+      options = {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address, password })
+      };
     }
 
-    const data = await response.json();
-    return res.status(200).json(data);
+    // 3️⃣ Token al
+    else if (action === "token") {
+      url = "https://api.mail.tm/token";
+      options = {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address, password })
+      };
+    }
+
+    // 4️⃣ Inbox
+    else if (action === "messages") {
+      url = "https://api.mail.tm/messages";
+      options.headers.Authorization = `Bearer ${token}`;
+    }
+
+    else {
+      return res.status(400).json({ error: "Geçersiz action" });
+    }
+
+    const response = await fetch(url, options);
+    const text = await response.text();
+
+    // mail.tm bazen boş body döner
+    try {
+      const json = JSON.parse(text);
+      return res.status(200).json(json);
+    } catch {
+      return res.status(200).send(text);
+    }
 
   } catch (err) {
-    console.error("PROXY ERROR:", err);
+    console.error("MAIL.TM PROXY ERROR:", err);
     return res.status(500).json({
       error: "Server error",
       message: err.message
     });
   }
 }
- 
+
