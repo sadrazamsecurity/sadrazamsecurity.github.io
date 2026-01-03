@@ -1,3 +1,7 @@
+export const config = {
+  runtime: "nodejs"
+};
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
@@ -12,7 +16,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    const r = await fetch(url);
+    const r = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0"
+      }
+    });
+
     const text = await r.text();
 
     try {
@@ -25,3 +34,4 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "proxy failed" });
   }
 }
+
