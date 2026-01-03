@@ -1,5 +1,6 @@
+const fetch = require('node-fetch');
+
 module.exports = async (req, res) => {
-  // Tarayıcı için izinler
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -11,7 +12,6 @@ module.exports = async (req, res) => {
   const { endpoint, method, body, token } = req.body;
 
   try {
-    // Vercel'in içine gömülü gelen fetch
     const response = await fetch(`https://api.mail.tm${endpoint}`, {
       method: method || 'GET',
       headers: {
