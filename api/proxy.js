@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-  // CORS
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
@@ -15,14 +14,17 @@ export default async function handler(req, res) {
     }
 
     let url = "";
-    let options = { method: "GET", headers: {} };
+    let options = {
+      method: "GET",
+      headers: {}
+    };
 
-    // 1️⃣ DOMAINLER
+    // DOMAINS
     if (action === "domains") {
       url = "https://api.mail.tm/domains";
     }
 
-    // 2️⃣ HESAP OLUŞTUR
+    // CREATE ACCOUNT
     else if (action === "create") {
       const { address, password } = req.query;
       if (!address || !password) {
@@ -35,7 +37,7 @@ export default async function handler(req, res) {
       options.body = JSON.stringify({ address, password });
     }
 
-    // 3️⃣ TOKEN AL
+    // TOKEN
     else if (action === "token") {
       const { address, password } = req.query;
       if (!address || !password) {
@@ -48,7 +50,7 @@ export default async function handler(req, res) {
       options.body = JSON.stringify({ address, password });
     }
 
-    // 4️⃣ MAİLLER
+    // GET MESSAGES
     else if (action === "messages") {
       const { token } = req.query;
       if (!token) {
@@ -56,10 +58,10 @@ export default async function handler(req, res) {
       }
 
       url = "https://api.mail.tm/messages";
-      options.headers.Authorization = `Bearer ${token}`;
+      options.headers["Authorization"] = `Bearer ${token}`;
     }
 
-    // 5️⃣ TEK MAİL
+    // GET MESSAGE BY ID
     else if (action === "message") {
       const { token, id } = req.query;
       if (!token || !id) {
@@ -67,7 +69,7 @@ export default async function handler(req, res) {
       }
 
       url = `https://api.mail.tm/messages/${id}`;
-      options.headers.Authorization = `Bearer ${token}`;
+      options.headers["Authorization"] = `Bearer ${token}`;
     }
 
     else {
@@ -77,8 +79,15 @@ export default async function handler(req, res) {
     const response = await fetch(url, options);
     const text = await response.text();
 
+    // mail.tm bazen boş body döndürür
+    if (!text || text.trim() === "") {
+      return res.status(response.status).json({ success: true });
+    }
+
+    // JSON ise parse et, değilse olduğu gibi dön
     try {
-      return res.status(response.status).json(JSON.parse(text));
+      const data = JSON.parse(text);
+      return res.status(response.status).json(data);
     } catch {
       return res.status(response.status).send(text);
     }
@@ -87,4 +96,5 @@ export default async function handler(req, res) {
     console.error("PROXY ERROR:", err);
     return res.status(500).json({ error: err.message });
   }
-                                   }
+}
+
