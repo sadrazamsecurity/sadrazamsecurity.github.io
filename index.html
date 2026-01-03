@@ -37,10 +37,6 @@
         .btn-secondary { border-color: var(--orange); color: var(--orange); }
         .btn-secondary:hover { background: var(--orange); color: #000; }
 
-        .strength-meter { height: 6px; background: #111; margin-bottom: 10px; border-radius: 3px; overflow: hidden; }
-        .strength-bar { height: 100%; width: 0%; transition: 0.5s ease-in-out; }
-        .brute-force-info { font-size: 0.75rem; color: #888; margin-bottom: 10px; }
-
         .mail-container { background: #000; border: 1px solid var(--border); padding: 15px; margin-top: 10px; }
         .mail-header { display: flex; gap: 10px; margin-bottom: 15px; }
         .mail-address { flex: 1; background: #111; padding: 10px; border: 1px dashed var(--accent); color: var(--accent); font-weight: bold; text-align: center; font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; }
@@ -52,11 +48,6 @@
 
         .info-box { padding: 18px; background: #000; border: 1px solid var(--border); font-size: 0.85rem; min-height: 50px; color: var(--orange); line-height: 1.7; white-space: pre-wrap; }
         
-        .law-box { border: 1px solid var(--red); background: rgba(255, 49, 49, 0.03); padding: 20px; margin-top: 40px; border-radius: 4px; }
-        .law-title { color: var(--red); font-weight: bold; display: block; margin-bottom: 8px; font-size: 0.9rem; }
-
-        .footer { text-align: center; margin-top: 60px; font-size: 0.7rem; color: #555; border-top: 1px solid var(--border); padding-top: 25px; letter-spacing: 2px; }
-
         @media (min-width: 768px) { .container { grid-template-columns: 1fr 1fr; } .full-width { grid-column: span 2; } }
     </style>
 </head>
@@ -68,25 +59,22 @@
 </div>
 
 <div class="container">
-
     <div class="tool-card">
         <h2>Kripto Analizör (Hard)</h2>
         <input type="password" id="pInput" placeholder="Şifreyi test et..." oninput="checkStrength()">
-        <div class="strength-meter"><div id="pBar" class="strength-bar"></div></div>
         <div style="font-size: 0.7rem; display: flex; justify-content: space-between; margin-bottom: 5px;">
             <span id="pStat">ANALİZ BEKLENİYOR...</span>
             <span id="pPct">0%</span>
         </div>
-        <div id="bruteForce" class="brute-force-info">Kırılma Süresi: --</div>
         <input type="text" id="pOut" readonly placeholder="Üretilen şifre buraya gelecek...">
         <button class="btn" onclick="genPass()">GÜVENLİ ŞİFRE ÜRET</button>
     </div>
 
     <div class="tool-card">
-        <h2>Geçici E-Posta Servisi</h2>
+        <h2>Mail.tm API Servisi</h2>
         <div class="mail-container">
             <div class="mail-header">
-                <div id="mailAddr" class="mail-address">adres oluşturuluyor...</div>
+                <div id="mailAddr" class="mail-address">bağlanıyor...</div>
             </div>
             <div style="display: flex; gap: 5px; margin-bottom: 15px;">
                 <button class="btn" style="font-size: 0.6rem;" onclick="copyMail()">KOPYALA</button>
@@ -109,104 +97,72 @@
         <h2>Ağ Kimliği</h2>
         <div style="background: #000; padding: 15px; border: 1px solid var(--border); margin-bottom: 10px;">
             <div id="ipDisplay" style="text-align: center; font-size: 1.2rem; color: var(--accent);">0.0.0.0</div>
-            <div id="vpnStatus" style="font-size: 0.6rem; text-align: center; margin-top: 5px; color: var(--orange);">BAĞLANTI: ŞİFRELENMİŞ</div>
         </div>
         <button class="btn" onclick="fetchIP()">IP TAZELEN</button>
-    </div>
-
-    <div class="law-box full-width">
-        <span class="law-title">⚠ YASAL UYARI</span>
-        <p style="font-size: 0.75rem; margin: 0; color: #888;">
-            Bu araçlar sadece kişisel güvenlik testleri içindir. TCK m. 243 uyarınca izinsiz erişimler suçtur.
-        </p>
-    </div>
-
-    <div class="footer">
-        SADRAZAM SECURITY OS // 2026
     </div>
 </div>
 
 <script>
-    // --- ŞİFRE ANALİZÖRÜ ---
-    function checkStrength() {
-        const val = document.getElementById('pInput').value;
-        const bar = document.getElementById('pBar');
-        const stat = document.getElementById('pStat');
-        const pct = document.getElementById('pPct');
-        const brute = document.getElementById('bruteForce');
-
-        if (!val || val.length === 0) {
-            bar.style.width = "0%";
-            pct.innerText = "0%";
-            stat.innerText = "ANALİZ BEKLENİYOR...";
-            stat.style.color = "var(--text)";
-            brute.innerText = "Kırılma Süresi: --";
-            return;
-        }
-
-        let score = 0;
-        if (val.length >= 8) score += 20;
-        if (val.length >= 14) score += 20;
-        if (/[A-Z]/.test(val)) score += 20;
-        if (/[0-9]/.test(val)) score += 20;
-        if (/[^A-Za-z0-9]/.test(val)) score += 20;
-
-        bar.style.width = score + "%";
-        pct.innerText = score + "%";
-
-        if (score < 40) { 
-            bar.style.background = "var(--red)"; 
-            stat.innerText = "ZAYIF / TEHLİKELİ"; 
-            stat.style.color = "var(--red)";
-            brute.innerText = "Kırılma Süresi: ~3 Saniye";
-        } else if (score < 80) { 
-            bar.style.background = "var(--orange)"; 
-            stat.innerText = "ORTA / GELİŞTİRİLMELİ"; 
-            stat.style.color = "var(--orange)";
-            brute.innerText = "Kırılma Süresi: ~2 Ay";
-        } else { 
-            bar.style.background = "var(--green)"; 
-            stat.innerText = "GÜÇLÜ / ASKERİ"; 
-            stat.style.color = "var(--green)";
-            brute.innerText = "Kırılma Süresi: 100+ Yıl";
-        }
-    }
-
-    function genPass() {
-        const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789!@#$%^&*()";
-        let res = "";
-        for (let i = 0; i < 20; i++) res += chars.charAt(Math.floor(Math.random() * chars.length));
-        document.getElementById('pOut').value = res;
-    }
-
-    // --- GERÇEK TEMP MAIL SİSTEMİ (1secmail API) ---
-    let emailUser = "";
-    let emailDomain = "";
+    // --- MAIL.TM ENTEGRASYONU ---
+    let currentToken = "";
+    let currentAddress = "";
 
     async function generateNewMail() {
-        const domains = ["1secmail.com", "1secmail.org", "1secmail.net"];
-        emailUser = Math.random().toString(36).substring(2, 12);
-        emailDomain = domains[Math.floor(Math.random() * domains.length)];
-        const fullEmail = emailUser + "@" + emailDomain;
-        
-        document.getElementById('mailAddr').innerText = fullEmail;
-        document.getElementById('mailInbox').innerHTML = '<div style="text-align: center; color: var(--orange); padding: 20px;">Gelen kutusu boş...</div>';
-    }
+        const addrDiv = document.getElementById('mailAddr');
+        const inboxDiv = document.getElementById('mailInbox');
+        addrDiv.innerText = "OLUŞTURULUYOR...";
+        inboxDiv.innerHTML = '<div style="text-align: center; color: var(--orange); padding: 20px;">Hesap yapılandırılıyor...</div>';
 
-    function copyMail() {
-        const email = document.getElementById('mailAddr').innerText;
-        navigator.clipboard.writeText(email);
-        alert("Adres panoya kopyalandı!");
+        try {
+            // 1. Domain Al
+            const domainRes = await fetch('https://api.mail.tm/domains');
+            const domainData = await domainRes.json();
+            const domain = domainData['hydra:member'][0].domain;
+
+            // 2. Rastgele Kimlik Oluştur
+            const user = 'sadrazam_' + Math.random().toString(36).substring(2, 8);
+            const address = `${user}@${domain}`;
+            const password = 'secure_password_2026';
+
+            // 3. Hesap Aç
+            const accRes = await fetch('https://api.mail.tm/accounts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ address, password })
+            });
+
+            if (!accRes.ok) throw new Error("Hesap oluşturulamadı");
+
+            // 4. Token Al (Login)
+            const tokenRes = await fetch('https://api.mail.tm/token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ address, password })
+            });
+            const tokenData = await tokenRes.json();
+            
+            currentToken = tokenData.token;
+            currentAddress = address;
+
+            addrDiv.innerText = address;
+            inboxDiv.innerHTML = '<div style="text-align: center; color: var(--green); padding: 20px;">Bağlantı başarılı. Mail bekleniyor...</div>';
+        } catch (err) {
+            addrDiv.innerText = "HATA!";
+            inboxDiv.innerHTML = '<div style="text-align: center; color: var(--red); padding: 20px;">API Bağlantı Sorunu!</div>';
+        }
     }
 
     async function refreshInbox() {
-        if (!emailUser) return;
+        if (!currentToken) return;
         const inbox = document.getElementById('mailInbox');
         inbox.innerHTML = '<div style="text-align: center; color: var(--accent); padding: 20px;">Sorgulanıyor...</div>';
 
         try {
-            const res = await fetch(`https://www.1secmail.com/api/v1/?action=getMessages&login=${emailUser}&domain=${emailDomain}`);
-            const messages = await res.json();
+            const res = await fetch('https://api.mail.tm/messages', {
+                headers: { 'Authorization': `Bearer ${currentToken}` }
+            });
+            const data = await res.json();
+            const messages = data['hydra:member'];
 
             if (messages.length === 0) {
                 inbox.innerHTML = '<div style="text-align: center; color: #444; padding: 20px;">Henüz yeni ileti yok.</div>';
@@ -216,38 +172,56 @@
                     const item = document.createElement('div');
                     item.className = 'mail-item';
                     item.innerHTML = `
-                        <span class="mail-subject">${msg.subject}</span>
-                        <span class="mail-from">Kimden: ${msg.from}</span>
+                        <span class="mail-subject">${msg.subject || '(Konu Yok)'}</span>
+                        <span class="mail-from">Kimden: ${msg.from.address}</span>
                     `;
-                    item.onclick = () => alert("İçerik çekme bu demo sürümünde sınırlıdır. Mesaj ID: " + msg.id);
+                    item.onclick = async () => {
+                        const contentRes = await fetch(`https://api.mail.tm/messages/${msg.id}`, {
+                            headers: { 'Authorization': `Bearer ${currentToken}` }
+                        });
+                        const contentData = await contentRes.json();
+                        alert("MESAJ İÇERİĞİ:\n\n" + (contentData.text || "İçerik çekilemedi."));
+                    };
                     inbox.appendChild(item);
                 });
             }
         } catch (e) {
-            inbox.innerHTML = '<div style="text-align: center; color: var(--red); padding: 20px;">API Bağlantı Hatası!</div>';
+            inbox.innerHTML = '<div style="text-align: center; color: var(--red); padding: 20px;">Gelen kutusu tazelenemedi.</div>';
         }
     }
 
+    function copyMail() {
+        navigator.clipboard.writeText(currentAddress);
+        alert("Adres kopyalandı!");
+    }
+
     // --- DİĞER FONKSİYONLAR ---
+    function genPass() {
+        const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789!@#$%^&*()";
+        let res = "";
+        for (let i = 0; i < 20; i++) res += chars.charAt(Math.floor(Math.random() * chars.length));
+        document.getElementById('pOut').value = res;
+    }
+
+    function checkStrength() {
+        const val = document.getElementById('pInput').value;
+        const pct = document.getElementById('pPct');
+        const stat = document.getElementById('pStat');
+        let score = Math.min(val.length * 10, 100);
+        pct.innerText = score + "%";
+        stat.innerText = score > 70 ? "GÜÇLÜ" : "ZAYIF";
+    }
+
     async function fetchIP() {
         try {
             const r = await fetch('https://api.ipify.org?format=json');
             const d = await r.json();
             document.getElementById('ipDisplay').innerText = d.ip;
-        } catch { document.getElementById('ipDisplay').innerText = "BAĞLANTI HATASI"; }
+        } catch { document.getElementById('ipDisplay').innerText = "HATA"; }
     }
 
     async function revealOracle() {
-        const ua = navigator.userAgent;
-        const lines = [
-            `🔮 Sadrazam Raporu:`,
-            `[+] Cihaz: ${navigator.platform}`,
-            `[+] Tarayıcı: ${navigator.vendor}`,
-            `[+] Çekirdek: ${navigator.hardwareConcurrency} Birim`,
-            `[+] Dil: ${navigator.language}`,
-            `[!] Durum: İz bırakmadan tarama yapılıyor...`
-        ];
-        document.getElementById('oracleBox').innerText = lines.join('\n');
+        document.getElementById('oracleBox').innerText = `[+] OS: ${navigator.platform}\n[+] Agent: ${navigator.userAgent.split(' ')[0]}\n[+] Mail.tm: Aktif\n[+] Status: Güvenli`;
     }
 
     window.onload = () => {
@@ -255,6 +229,5 @@
         generateNewMail();
     };
 </script>
-
 </body>
-    </html>
+</html>
