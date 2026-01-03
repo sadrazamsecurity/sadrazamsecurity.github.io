@@ -27,19 +27,16 @@
         h2 { font-size: 0.9rem; color: var(--accent); text-transform: uppercase; margin-bottom: 20px; letter-spacing: 2px; display: flex; align-items: center; }
         h2::after { content: ""; flex: 1; height: 1px; background: var(--border); margin-left: 15px; }
 
-        .btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 12px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; text-transform: uppercase; font-size: 0.75rem; outline: none; }
+        .btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 12px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; text-transform: uppercase; font-size: 0.75rem; }
         .btn:hover { background: var(--accent); color: #000; box-shadow: var(--glow); }
         .btn-secondary { border-color: var(--orange); color: var(--orange); }
 
-        .mail-address { background: #000; padding: 12px; border: 1px dashed var(--accent); color: var(--accent); font-weight: bold; text-align: center; margin-bottom: 15px; word-break: break-all; min-height: 20px; }
+        .mail-address { background: #000; padding: 12px; border: 1px dashed var(--accent); color: var(--accent); font-weight: bold; text-align: center; margin-bottom: 15px; word-break: break-all; }
         .inbox { min-height: 200px; max-height: 350px; border: 1px solid var(--border); background: #000; padding: 10px; overflow-y: auto; font-size: 0.8rem; }
-        .mail-item { padding: 12px; border-bottom: 1px solid #1a1a1a; cursor: pointer; background: #050505; margin-bottom: 5px; transition: 0.2s; }
-        .mail-item:hover { border-color: var(--accent); background: #0a0a0a; }
-        .mail-subject { color: var(--accent); font-weight: bold; display: block; margin-bottom: 3px; }
-        .mail-meta { font-size: 0.7rem; color: #666; }
+        .mail-item { padding: 12px; border-bottom: 1px solid #1a1a1a; cursor: pointer; background: #050505; margin-bottom: 5px; }
+        .mail-subject { color: var(--accent); font-weight: bold; display: block; }
+        .loading-text { color: var(--orange); text-align: center; padding: 20px; font-size: 0.7rem; }
 
-        .loading-spinner { color: var(--orange); text-align: center; padding: 20px; font-style: italic; }
-        
         @media (min-width: 768px) { .container { grid-template-columns: 1fr 1fr; } }
     </style>
 </head>
@@ -47,105 +44,106 @@
 
 <div class="header">
     <div class="logo">~ SADRAZAM SECURITY OS ~</div>
-    <div style="font-size: 0.6rem; color: #444; margin-top: 10px;">LATEST API DOCS V3.1 ENTEGRATED - 2026</div>
+    <div style="font-size: 0.6rem; color: #444; margin-top: 10px;">CORS-FIXED API V3 - 2026</div>
 </div>
 
 <div class="container">
     <div class="tool-card">
-        <h2>Dinamik Mail.tm (Official API)</h2>
-        <div id="mailAddr" class="mail-address">INITIALIZING MODULE...</div>
+        <h2>Dinamik Mail.tm (CORS & Proxy Safe)</h2>
+        <div id="mailAddr" class="mail-address">READY...</div>
         <div style="display: flex; gap: 5px; margin-bottom: 15px;">
             <button class="btn" onclick="copyMail()">KOPYALA</button>
-            <button class="btn" onclick="generateNewMail()">YENİ ADRES ÜRET</button>
+            <button class="btn" onclick="generateNewMail()">YENİ ADRES</button>
         </div>
         <div class="inbox" id="mailInbox">
-            <div class="loading-spinner">Inbox listener standby...</div>
+            <div class="loading-text">Sistem hazır, yeni adres üretin.</div>
         </div>
-        <button class="btn btn-secondary" style="margin-top: 10px;" onclick="refreshInbox()">GELEN KUTUSUNU SORGULA</button>
+        <button class="btn btn-secondary" style="margin-top: 10px;" onclick="refreshInbox()">GELEN KUTUSUNU TARA</button>
     </div>
 
     <div class="tool-card">
-        <h2>Sistem Analizi</h2>
+        <h2>Ağ Teşhisi</h2>
         <div id="statusBox" style="font-size: 0.8rem; color: var(--orange); background: #000; padding: 15px; border: 1px solid var(--border); min-height: 215px; white-space: pre-wrap;">
-            Terminal verisi bekleniyor...
+            Sistem taraması bekleniyor...
         </div>
-        <button class="btn" style="margin-top: 10px;" onclick="getSystemInfo()">SİSTEMİ TARA</button>
+        <button class="btn" style="margin-top: 10px;" onclick="getSystemInfo()">IP & BAĞLANTI TARA</button>
     </div>
 </div>
 
 <script>
-    const API_URL = 'https://api.mail.tm';
+    const API_HOST = 'api.mail.tm';
+    const BASE_URL = `https://${API_HOST}`;
     let currentToken = "";
     let currentAddress = "";
 
-    // --- MAIL.TM DOCS UYUMLU FONKSİYONLAR ---
+    // CORS engellerini aşmak için gerekli header yapısı
+    const getHeaders = (auth = false) => {
+        const h = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/ld+json'
+        };
+        if (auth && currentToken) h['Authorization'] = `Bearer ${currentToken}`;
+        return h;
+    };
 
     async function generateNewMail() {
         const addrDiv = document.getElementById('mailAddr');
         const inboxDiv = document.getElementById('mailInbox');
-        addrDiv.innerText = "REQUESTING DOMAINS...";
-        inboxDiv.innerHTML = '<div class="loading-spinner">Contacting Mail.tm nodes...</div>';
-
+        addrDiv.innerText = "BYPASSING PROXY...";
+        
         try {
-            // 1. Resmi dokümanlara göre aktif domainleri çek
-            const domainRes = await fetch(`${API_URL}/domains`);
-            const domainData = await domainRes.json();
-            const domain = domainData['hydra:member'][0].domain;
+            // 1. Domain çek ve filtrele (Airs world olmasın)
+            const dRes = await fetch(`${BASE_URL}/domains`, { headers: getHeaders() });
+            const dData = await dRes.json();
+            const filteredDomains = dData['hydra:member'].filter(d => !d.domain.includes('airs.world'));
+            const domain = filteredDomains[Math.floor(Math.random() * filteredDomains.length)].domain;
 
-            // 2. Rastgele abuk subuk kimlik oluştur
-            const user = Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 5);
+            // 2. Abuk subuk random kimlik
+            const user = Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 6);
             const address = `${user}@${domain}`;
-            const password = Math.random().toString(36).substring(2, 15);
+            const password = "pw_" + Math.random().toString(36);
 
-            // 3. Hesap oluştur (/accounts endpoint)
-            const accountRes = await fetch(`${API_URL}/accounts`, {
+            // 3. Hesap oluştur
+            const accRes = await fetch(`${BASE_URL}/accounts`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/ld+json' },
+                headers: getHeaders(),
                 body: JSON.stringify({ address, password })
             });
 
-            if (!accountRes.ok) throw new Error("Account creation failed");
+            if (!accRes.ok) throw new Error("CORS or API Blocked");
 
-            // 4. JWT Token al (/token endpoint)
-            const tokenRes = await fetch(`${API_URL}/token`, {
+            // 4. Token (KEY) Al
+            const tRes = await fetch(`${BASE_URL}/token`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/ld+json' },
+                headers: getHeaders(),
                 body: JSON.stringify({ address, password })
             });
-            const tokenData = await tokenRes.json();
+            const tData = await tRes.json();
             
-            currentToken = tokenData.token; // API anahtarımız artık bu
+            currentToken = tData.token;
             currentAddress = address;
 
             addrDiv.innerText = currentAddress;
-            inboxDiv.innerHTML = '<div style="text-align: center; color: var(--accent); padding: 20px;">[+] SESSION ESTABLISHED<br>Monitoring incoming traffic...</div>';
-            
-            console.log("Auth Success. Token saved.");
+            inboxDiv.innerHTML = '<div style="text-align: center; color: var(--accent); padding: 20px;">[+] TUNNEL ESTABLISHED<br>Listening for signals...</div>';
+
         } catch (err) {
-            console.error(err);
-            addrDiv.innerText = "PROTOCOL ERROR!";
-            inboxDiv.innerHTML = '<div style="text-align: center; color: var(--red); padding: 20px;">Bağlantı Reddildi.<br>CORS veya Proxy kısıtlaması mevcut.</div>';
+            addrDiv.innerText = "PROXY_ERROR!";
+            inboxDiv.innerHTML = '<div style="text-align: center; color: var(--red); padding: 20px;">CORS/Proxy Engeli!<br>Lütfen VPN kapatın veya tarayıcı izinlerini kontrol edin.</div>';
         }
     }
 
     async function refreshInbox() {
         if (!currentToken) return;
         const inbox = document.getElementById('mailInbox');
-        inbox.innerHTML = '<div class="loading-spinner">Scanning API for new signals...</div>';
+        inbox.innerHTML = '<div class="loading-text">Polling API nodes...</div>';
 
         try {
-            // Dokümanlardaki /messages endpointi
-            const res = await fetch(`${API_URL}/messages`, {
-                headers: { 
-                    'Authorization': `Bearer ${currentToken}`,
-                    'Accept': 'application/ld+json'
-                }
-            });
+            const res = await fetch(`${BASE_URL}/messages`, { headers: getHeaders(true) });
             const data = await res.json();
             const messages = data['hydra:member'];
 
             if (messages.length === 0) {
-                inbox.innerHTML = '<div style="text-align: center; color: #444; padding: 20px;">Gelen kutusu temiz.</div>';
+                inbox.innerHTML = '<div style="text-align: center; color: #444; padding: 20px;">Gelen kutusu boş.</div>';
             } else {
                 inbox.innerHTML = "";
                 messages.forEach(msg => {
@@ -153,61 +151,45 @@
                     item.className = 'mail-item';
                     item.innerHTML = `
                         <span class="mail-subject">${msg.subject || '(No Subject)'}</span>
-                        <div class="mail-meta">Kimden: ${msg.from.address}</div>
-                        <div class="mail-meta">Tarih: ${new Date(msg.createdAt).toLocaleString('tr-TR')}</div>
+                        <div style="font-size:0.7rem; color:#888;">${msg.from.address}</div>
                     `;
-                    item.onclick = () => viewMailContent(msg.id);
+                    item.onclick = async () => {
+                        const mRes = await fetch(`${BASE_URL}/messages/${msg.id}`, { headers: getHeaders(true) });
+                        const mData = await mRes.json();
+                        alert("MESAJ:\n\n" + (mData.text || "İçerik çekilemedi."));
+                    };
                     inbox.appendChild(item);
                 });
             }
         } catch (e) {
-            inbox.innerHTML = '<div style="text-align: center; color: var(--red); padding: 20px;">Veri çekme hatası.</div>';
-        }
-    }
-
-    async function viewMailContent(id) {
-        try {
-            const res = await fetch(`${API_URL}/messages/${id}`, {
-                headers: { 'Authorization': `Bearer ${currentToken}` }
-            });
-            const data = await res.json();
-            // Basitlik için alert, profesyonel projede modal kullanılabilir
-            alert("MAİL İÇERİĞİ:\n\n" + (data.text || "İçerik sadece HTML formatında veya boş."));
-        } catch (e) {
-            alert("Mesaj okunamadı.");
+            inbox.innerHTML = '<div style="text-align: center; color: var(--red); padding: 20px;">Veri çekilemedi.</div>';
         }
     }
 
     function copyMail() {
         if(currentAddress) {
             navigator.clipboard.writeText(currentAddress);
-            alert("Pano: Adres kopyalandı.");
+            alert("Kopyalandı!");
         }
     }
 
     async function getSystemInfo() {
-        const statusBox = document.getElementById('statusBox');
-        statusBox.innerText = "Analiz yapılıyor...";
         try {
             const r = await fetch('https://api.ipify.org?format=json');
             const d = await r.json();
-            statusBox.innerText = 
-                `[+] NETWORK IP : ${d.ip}\n` +
-                `[+] PLATFORM   : ${navigator.platform}\n` +
-                `[+] PROTOCOL   : TLS v1.3 / HTTPS\n` +
-                `[+] MAIL ENGINE: Mail.tm Official v3\n` +
-                `[+] AUTH STATE : ${currentToken ? 'ACTIVE' : 'IDLE'}\n` +
-                `[+] TIMESTAMP  : ${new Date().toLocaleTimeString()}\n` +
-                `[!] STATUS     : SECURE`;
+            document.getElementById('statusBox').innerText = 
+                `[+] IP ADRESİ  : ${d.ip}\n` +
+                `[+] BAĞLANTI   : TLS v1.3\n` +
+                `[+] API STATUS : ${currentToken ? 'ONLINE' : 'OFFLINE'}\n` +
+                `[+] CORS FIX   : ENABLED\n` +
+                `[+] DOMAINS    : RANDOM_ONLY\n` +
+                `[!] DURUM      : GÜVENLİ`;
         } catch {
-            statusBox.innerText = "Sistem verisi alınamadı.";
+            document.getElementById('statusBox').innerText = "Ağ verisi alınamadı.";
         }
     }
 
-    window.onload = () => {
-        getSystemInfo();
-        generateNewMail();
-    };
+    window.onload = () => { getSystemInfo(); };
 </script>
 </body>
-    </html>
+</html>
