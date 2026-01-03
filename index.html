@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Temp Mail</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
       background: #0f0f0f;
@@ -12,29 +12,35 @@
       padding: 20px;
     }
     button {
-      padding: 10px 16px;
+      padding: 12px 18px;
       font-size: 16px;
-      cursor: pointer;
       background: #1e90ff;
       border: none;
-      color: white;
+      color: #fff;
       border-radius: 6px;
+      cursor: pointer;
+    }
+    #status {
+      margin-top: 15px;
+      opacity: 0.8;
     }
     #mail {
-      margin-top: 15px;
+      margin-top: 10px;
       font-weight: bold;
       word-break: break-all;
     }
     ul {
       margin-top: 20px;
+      padding-left: 18px;
     }
   </style>
 </head>
 <body>
 
-  <h2>Geçici Mail</h2>
+  <h2>Geçici Mail (mail.tm)</h2>
   <button onclick="createMail()">Mail Oluştur</button>
 
+  <div id="status"></div>
   <div id="mail"></div>
 
   <ul id="messages"></ul>
@@ -42,49 +48,86 @@
 <script>
 const API = "/api/proxy";
 
-async function callProxy(action, params = {}) {
-  const query = new URLSearchParams({ action, ...params }).toString();
-  const res = await fetch(`${API}?${query}`);
-  return await res.json();
-}
-
 let address = "";
 let password = "";
 let token = "";
 
-async function createMail() {
-  document.getElementById("mail").innerText = "Oluşturuluyor...";
+/* yardımcı */
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-  const domains = await callProxy("domains");
-  const domain = domains["hydra:member"][0].domain;
-
-  address = Math.random().toString(36).slice(2) + "@" + domain;
-  password = Math.random().toString(36).slice(2);
-
-  await callProxy("create", { address, password });
-
-  const t = await callProxy("token", { address, password });
-  token = t.token;
-
-  document.getElementById("mail").innerText = address;
-
-  loadMessages();
+async function callProxy(action, params = {}) {
+  const q = new URLSearchParams({ action, ...params }).toString();
+  const res = await fetch(`${API}?${q}`);
+  if (!res.ok) throw new Error("API error " + res.status);
+  return await res.json();
 }
 
+/* ANA AKIŞ */
+async function createMail() {
+  const status = document.getElementById("status");
+  const mailDiv = document.getElementById("mail");
+  const list = document.getElementById("messages");
+
+  status.innerText = "Mail oluşturuluyor...";
+  mailDiv.innerText = "";
+  list.innerHTML = "";
+
+  try {
+    // 1️⃣ Domain al
+    const domains = await callProxy("domains");
+    const domain = domains["hydra:member"][0].domain;
+
+    address = Math.random().toString(36).slice(2) + "@" + domain;
+    password = Math.random().toString(36).slice(2);
+
+    // 2️⃣ Hesap oluştur
+    await callProxy("create", { address, password });
+
+    // mail.tm rate-limit → kısa bekleme
+    await sleep(2500);
+
+    // 3️⃣ Token al (1 retry’lı)
+    let tokenData;
+    try {
+      tokenData = await callProxy("token", { address, password });
+    } catch {
+      await sleep(3000);
+      tokenData = await callProxy("token", { address, password });
+    }
+
+    token = tokenData.token;
+
+    mailDiv.innerText = address;
+    status.innerText = "Mail hazır ✔";
+
+    loadMessages();
+
+  } catch (err) {
+    status.innerText = "Hata oluştu (mail.tm limit olabilir). Tekrar dene.";
+    console.error(err);
+  }
+}
+
+/* MESAJLAR */
 async function loadMessages() {
   if (!token) return;
 
-  const data = await callProxy("messages", { token });
-  const list = document.getElementById("messages");
-  list.innerHTML = "";
+  try {
+    const data = await callProxy("messages", { token });
+    const list = document.getElementById("messages");
+    list.innerHTML = "";
 
-  if (!data["hydra:member"]) return;
+    if (!data["hydra:member"]) return;
 
-  data["hydra:member"].forEach(m => {
-    const li = document.createElement("li");
-    li.textContent = m.from.address + " | " + m.subject;
-    list.appendChild(li);
-  });
+    data["hydra:member"].forEach(m => {
+      const li = document.createElement("li");
+      li.textContent = `${m.from.address} | ${m.subject}`;
+      list.appendChild(li);
+    });
+
+  } catch (err) {
+    console.error("Mesaj yüklenemedi", err);
+  }
 }
 </script>
 
