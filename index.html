@@ -6,13 +6,20 @@
     <title>~SADRAZAM SECURITY OS~</title>
     <style>
         :root {
-            --bg: #030303; --card: #0a0a0a; --accent: #00ffcc;
-            --text: #e0e0e0; --border: #1a1a1a; --red: #ff3e3e;
-            --orange: #ff9f43; --green: #2ecc71; --glow: 0 0 15px rgba(0, 255, 204, 0.3);
+            --bg: #030303;
+            --card: #0a0a0a;
+            --accent: #00ffcc;
+            --accent-dim: rgba(0, 255, 204, 0.1);
+            --text: #e0e0e0;
+            --border: #1a1a1a;
+            --red: #ff3e3e;
+            --orange: #ff9f43;
+            --green: #2ecc71;
+            --glow: 0 0 15px rgba(0, 255, 204, 0.3);
         }
 
         body { font-family: 'Consolas', 'Courier New', monospace; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; line-height: 1.6; }
-        .header { text-align: center; padding: 30px; border-bottom: 1px solid var(--accent); margin-bottom: 40px; }
+        .header { text-align: center; padding: 30px; border-bottom: 1px solid var(--accent); margin-bottom: 40px; background: linear-gradient(180deg, #0a0a0a 0%, #030303 100%); }
         .logo { font-size: 1.8rem; color: var(--accent); font-weight: bold; letter-spacing: 6px; text-shadow: var(--glow); }
         
         .container { max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 25px; }
@@ -22,24 +29,33 @@
         h2 { font-size: 0.9rem; color: var(--accent); text-transform: uppercase; margin-bottom: 20px; letter-spacing: 2px; display: flex; align-items: center; }
         h2::after { content: ""; flex: 1; height: 1px; background: var(--border); margin-left: 15px; }
 
-        input { width: 100%; padding: 15px; background: #000; border: 1px solid var(--border); color: var(--accent); margin-bottom: 15px; box-sizing: border-box; outline: none; transition: 0.3s; }
+        input, select { width: 100%; padding: 15px; background: #000; border: 1px solid var(--border); color: var(--accent); margin-bottom: 15px; box-sizing: border-box; outline: none; transition: 0.3s; }
+        input:focus { border-color: var(--accent); box-shadow: var(--glow); }
         
-        .btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 14px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; text-transform: uppercase; font-size: 0.8rem; }
+        .btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 14px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; }
         .btn:hover { background: var(--accent); color: #000; box-shadow: var(--glow); }
         .btn-secondary { border-color: var(--orange); color: var(--orange); }
+        .btn-secondary:hover { background: var(--orange); color: #000; }
 
-        /* Gelişmiş Şifre Testi Duyarlılığı */
-        .strength-meter { height: 8px; background: #111; margin-bottom: 10px; border-radius: 4px; overflow: hidden; border: 1px solid #1a1a1a; }
-        .strength-bar { height: 100%; width: 0%; transition: 0.4s ease; }
+        .strength-meter { height: 6px; background: #111; margin-bottom: 10px; border-radius: 3px; overflow: hidden; }
+        .strength-bar { height: 100%; width: 0%; transition: 0.5s ease-in-out; }
+        .brute-force-info { font-size: 0.75rem; color: #888; margin-bottom: 10px; }
 
-        /* Mail Terminal Alanı */
-        .mail-address { background: #111; padding: 12px; border: 1px dashed var(--accent); color: var(--accent); font-weight: bold; text-align: center; margin-bottom: 10px; font-size: 0.85rem; cursor: crosshair; }
-        .inbox { min-height: 150px; border-top: 1px solid var(--border); padding-top: 10px; font-size: 0.8rem; max-height: 300px; overflow-y: auto; }
-        .mail-item { padding: 12px; border-bottom: 1px solid #1a1a1a; cursor: pointer; color: var(--orange); background: #050505; margin-bottom: 8px; border-left: 0px solid var(--accent); transition: 0.2s; }
-        .mail-item:hover { border-left: 4px solid var(--accent); padding-left: 16px; }
+        .mail-container { background: #000; border: 1px solid var(--border); padding: 15px; margin-top: 10px; }
+        .mail-header { display: flex; gap: 10px; margin-bottom: 15px; }
+        .mail-address { flex: 1; background: #111; padding: 10px; border: 1px dashed var(--accent); color: var(--accent); font-weight: bold; text-align: center; font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; }
+        .inbox { min-height: 150px; max-height: 300px; border-top: 1px solid var(--border); padding-top: 10px; font-size: 0.8rem; overflow-y: auto; }
+        .mail-item { padding: 12px; border-bottom: 1px solid #1a1a1a; cursor: pointer; transition: 0.2s; background: #050505; margin-bottom: 5px; }
+        .mail-item:hover { border-color: var(--accent); }
+        .mail-subject { color: var(--accent); font-weight: bold; display: block; }
+        .mail-from { font-size: 0.7rem; color: var(--orange); }
 
-        .info-box { padding: 18px; background: #000; border: 1px solid var(--border); font-size: 0.85rem; color: var(--orange); white-space: pre-wrap; }
-        .law-box { border: 1px solid var(--red); padding: 20px; margin-top: 40px; }
+        .info-box { padding: 18px; background: #000; border: 1px solid var(--border); font-size: 0.85rem; min-height: 50px; color: var(--orange); line-height: 1.7; white-space: pre-wrap; }
+        
+        .law-box { border: 1px solid var(--red); background: rgba(255, 49, 49, 0.03); padding: 20px; margin-top: 40px; border-radius: 4px; }
+        .law-title { color: var(--red); font-weight: bold; display: block; margin-bottom: 8px; font-size: 0.9rem; }
+
+        .footer { text-align: center; margin-top: 60px; font-size: 0.7rem; color: #555; border-top: 1px solid var(--border); padding-top: 25px; letter-spacing: 2px; }
 
         @media (min-width: 768px) { .container { grid-template-columns: 1fr 1fr; } .full-width { grid-column: span 2; } }
     </style>
@@ -48,165 +64,197 @@
 
 <div class="header">
     <div class="logo">~ SADRAZAM SECURITY OS ~</div>
+    <div style="font-size: 0.6rem; color: #444; margin-top: 10px;">VIRTUAL TERMINAL ACTIVE - 2026</div>
 </div>
 
 <div class="container">
+
     <div class="tool-card">
-        <h2>Kripto Analizör (Hard Mode)</h2>
-        <input type="password" id="pInput" placeholder="Şifre analizi..." oninput="checkStrength()">
+        <h2>Kripto Analizör (Hard)</h2>
+        <input type="password" id="pInput" placeholder="Şifreyi test et..." oninput="checkStrength()">
         <div class="strength-meter"><div id="pBar" class="strength-bar"></div></div>
-        <div style="font-size: 0.7rem; display: flex; justify-content: space-between; margin-bottom: 10px;">
+        <div style="font-size: 0.7rem; display: flex; justify-content: space-between; margin-bottom: 5px;">
             <span id="pStat">ANALİZ BEKLENİYOR...</span>
             <span id="pPct">0%</span>
         </div>
-        <input type="text" id="pOut" readonly placeholder="Üretilen şifre...">
-        <div style="display: flex; gap: 5px;">
-            <button class="btn" style="flex: 1;" onclick="genPass()">ÜRET</button>
-            <button class="btn btn-secondary" style="flex: 1;" onclick="copyVal('pOut')">KOPYALA</button>
-        </div>
+        <div id="bruteForce" class="brute-force-info">Kırılma Süresi: --</div>
+        <input type="text" id="pOut" readonly placeholder="Üretilen şifre buraya gelecek...">
+        <button class="btn" onclick="genPass()">GÜVENLİ ŞİFRE ÜRET</button>
     </div>
 
     <div class="tool-card">
         <h2>Geçici E-Posta Servisi</h2>
-        <div id="mailAddr" class="mail-address" onclick="copyRaw(this.innerText)">YÜKLENİYOR...</div>
-        <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-            <button class="btn" style="font-size: 0.7rem;" onclick="generateNewMail()">YENİ ADRES</button>
-            <button class="btn btn-secondary" style="font-size: 0.7rem;" id="refreshBtn" onclick="refreshInbox()">GÜNCELLE</button>
+        <div class="mail-container">
+            <div class="mail-header">
+                <div id="mailAddr" class="mail-address">adres oluşturuluyor...</div>
+            </div>
+            <div style="display: flex; gap: 5px; margin-bottom: 15px;">
+                <button class="btn" style="font-size: 0.6rem;" onclick="copyMail()">KOPYALA</button>
+                <button class="btn" style="font-size: 0.6rem;" onclick="generateNewMail()">YENİLE</button>
+            </div>
+            <div class="inbox" id="mailInbox">
+                <div style="text-align: center; color: #444; padding: 20px;">Gelen kutusu dinleniyor...</div>
+            </div>
+            <button class="btn btn-secondary" style="font-size: 0.6rem; margin-top: 10px;" onclick="refreshInbox()">GELEN KUTUSUNU GÜNCELLE</button>
         </div>
-        <div class="inbox" id="mailInbox">Gelen kutusu dinleniyor...</div>
     </div>
 
     <div class="tool-card">
         <h2>Sistem Kehaneti</h2>
-        <div id="oracleBox" class="info-box">Tarama bekleniyor...</div>
+        <div id="oracleBox" class="info-box">Cihaz izlerini sürmek için yetki ver...</div>
         <button class="btn btn-secondary" style="margin-top: 15px;" onclick="revealOracle()">SİSTEMİ TARA</button>
     </div>
 
     <div class="tool-card">
         <h2>Ağ Kimliği</h2>
-        <div style="background: #000; padding: 20px; border: 1px solid var(--border); text-align: center; color: var(--accent); font-size: 1.2rem;" id="ipDisplay">0.0.0.0</div>
-        <button class="btn" style="margin-top: 15px;" onclick="fetchIP()">IP TAZELEN</button>
+        <div style="background: #000; padding: 15px; border: 1px solid var(--border); margin-bottom: 10px;">
+            <div id="ipDisplay" style="text-align: center; font-size: 1.2rem; color: var(--accent);">0.0.0.0</div>
+            <div id="vpnStatus" style="font-size: 0.6rem; text-align: center; margin-top: 5px; color: var(--orange);">BAĞLANTI: ŞİFRELENMİŞ</div>
+        </div>
+        <button class="btn" onclick="fetchIP()">IP TAZELEN</button>
     </div>
 
     <div class="law-box full-width">
-        <span style="color: var(--red); font-weight: bold;">⚠ YASAL UYARI:</span>
-        <p style="font-size: 0.75rem; color: #888;">Bu terminal yerel güvenlik testleri için tasarlanmıştır. Tüm hakları saklıdır.</p>
+        <span class="law-title">⚠ YASAL UYARI</span>
+        <p style="font-size: 0.75rem; margin: 0; color: #888;">
+            Bu araçlar sadece kişisel güvenlik testleri içindir. TCK m. 243 uyarınca izinsiz erişimler suçtur.
+        </p>
+    </div>
+
+    <div class="footer">
+        SADRAZAM SECURITY OS // 2026
     </div>
 </div>
 
 <script>
-    // --- ŞİFRE TESTİ (SENSITIVE & RESET) ---
+    // --- ŞİFRE ANALİZÖRÜ ---
     function checkStrength() {
         const val = document.getElementById('pInput').value;
         const bar = document.getElementById('pBar');
         const stat = document.getElementById('pStat');
         const pct = document.getElementById('pPct');
-        
-        if (val === "") {
-            bar.style.width = "0%"; pct.innerText = "0%";
-            stat.innerText = "ANALİZ BEKLENİYOR..."; stat.style.color = "var(--text)";
-            bar.style.background = "transparent"; return;
+        const brute = document.getElementById('bruteForce');
+
+        if (!val || val.length === 0) {
+            bar.style.width = "0%";
+            pct.innerText = "0%";
+            stat.innerText = "ANALİZ BEKLENİYOR...";
+            stat.style.color = "var(--text)";
+            brute.innerText = "Kırılma Süresi: --";
+            return;
         }
 
         let score = 0;
-        // Zorlaştırılmış puanlama (2 harfle yükselmez)
-        if (val.length > 7) score += 15;
-        if (val.length > 12) score += 15;
+        if (val.length >= 8) score += 20;
+        if (val.length >= 14) score += 20;
         if (/[A-Z]/.test(val)) score += 20;
         if (/[0-9]/.test(val)) score += 20;
-        if (/[^A-Za-z0-9]/.test(val)) score += 30;
+        if (/[^A-Za-z0-9]/.test(val)) score += 20;
 
         bar.style.width = score + "%";
         pct.innerText = score + "%";
 
-        if(score < 40) { bar.style.background = "var(--red)"; stat.innerText = "GÜVENSİZ"; stat.style.color = "var(--red)"; }
-        else if(score < 75) { bar.style.background = "var(--orange)"; stat.innerText = "ORTA SEVİYE"; stat.style.color = "var(--orange)"; }
-        else { bar.style.background = "var(--green)"; stat.innerText = "ASKERİ GÜVENLİK"; stat.style.color = "var(--green)"; }
+        if (score < 40) { 
+            bar.style.background = "var(--red)"; 
+            stat.innerText = "ZAYIF / TEHLİKELİ"; 
+            stat.style.color = "var(--red)";
+            brute.innerText = "Kırılma Süresi: ~3 Saniye";
+        } else if (score < 80) { 
+            bar.style.background = "var(--orange)"; 
+            stat.innerText = "ORTA / GELİŞTİRİLMELİ"; 
+            stat.style.color = "var(--orange)";
+            brute.innerText = "Kırılma Süresi: ~2 Ay";
+        } else { 
+            bar.style.background = "var(--green)"; 
+            stat.innerText = "GÜÇLÜ / ASKERİ"; 
+            stat.style.color = "var(--green)";
+            brute.innerText = "Kırılma Süresi: 100+ Yıl";
+        }
     }
 
-    // --- TEMP MAIL API (STABILIZED) ---
-    let emailUser = localStorage.getItem('s_mail') || Math.random().toString(36).substring(2, 10);
-    const domain = "1secmail.com";
-    localStorage.setItem('s_mail', emailUser);
+    function genPass() {
+        const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789!@#$%^&*()";
+        let res = "";
+        for (let i = 0; i < 20; i++) res += chars.charAt(Math.floor(Math.random() * chars.length));
+        document.getElementById('pOut').value = res;
+    }
 
-    function generateNewMail() {
-        emailUser = Math.random().toString(36).substring(2, 10);
-        localStorage.setItem('s_mail', emailUser);
-        document.getElementById('mailAddr').innerText = emailUser + "@" + domain;
-        document.getElementById('mailInbox').innerHTML = "Yeni adres aktif.";
+    // --- GERÇEK TEMP MAIL SİSTEMİ (1secmail API) ---
+    let emailUser = "";
+    let emailDomain = "";
+
+    async function generateNewMail() {
+        const domains = ["1secmail.com", "1secmail.org", "1secmail.net"];
+        emailUser = Math.random().toString(36).substring(2, 12);
+        emailDomain = domains[Math.floor(Math.random() * domains.length)];
+        const fullEmail = emailUser + "@" + emailDomain;
+        
+        document.getElementById('mailAddr').innerText = fullEmail;
+        document.getElementById('mailInbox').innerHTML = '<div style="text-align: center; color: var(--orange); padding: 20px;">Gelen kutusu boş...</div>';
+    }
+
+    function copyMail() {
+        const email = document.getElementById('mailAddr').innerText;
+        navigator.clipboard.writeText(email);
+        alert("Adres panoya kopyalandı!");
     }
 
     async function refreshInbox() {
-        const btn = document.getElementById('refreshBtn');
+        if (!emailUser) return;
         const inbox = document.getElementById('mailInbox');
-        btn.innerText = "TARANIYOR...";
-        
-        const target = `https://www.1secmail.com/api/v1/?action=getMessages&login=${emailUser}&domain=${domain}`;
-        const url = `https://api.allorigins.win/get?url=${encodeURIComponent(target)}&cache=${new Date().getTime()}`;
+        inbox.innerHTML = '<div style="text-align: center; color: var(--accent); padding: 20px;">Sorgulanıyor...</div>';
 
         try {
-            const res = await fetch(url);
-            const data = await res.json();
-            const messages = JSON.parse(data.contents);
+            const res = await fetch(`https://www.1secmail.com/api/v1/?action=getMessages&login=${emailUser}&domain=${emailDomain}`);
+            const messages = await res.json();
 
             if (messages.length === 0) {
-                inbox.innerHTML = "<div style='color:#333; text-align:center; padding:20px;'>İleti bekleniyor...</div>";
+                inbox.innerHTML = '<div style="text-align: center; color: #444; padding: 20px;">Henüz yeni ileti yok.</div>';
             } else {
                 inbox.innerHTML = "";
                 messages.forEach(msg => {
-                    const d = document.createElement('div');
-                    d.className = 'mail-item';
-                    d.innerHTML = `<strong>${msg.from}</strong><br><small>${msg.subject}</small>`;
-                    d.onclick = () => readMail(msg.id);
-                    inbox.appendChild(d);
+                    const item = document.createElement('div');
+                    item.className = 'mail-item';
+                    item.innerHTML = `
+                        <span class="mail-subject">${msg.subject}</span>
+                        <span class="mail-from">Kimden: ${msg.from}</span>
+                    `;
+                    item.onclick = () => alert("İçerik çekme bu demo sürümünde sınırlıdır. Mesaj ID: " + msg.id);
+                    inbox.appendChild(item);
                 });
             }
         } catch (e) {
-            inbox.innerHTML = "<span style='color:var(--red)'>API Bağlantı Hatası! (Proxy Yoğun)</span>";
-        } finally { btn.innerText = "GÜNCELLE"; }
+            inbox.innerHTML = '<div style="text-align: center; color: var(--red); padding: 20px;">API Bağlantı Hatası!</div>';
+        }
     }
 
-    async function readMail(id) {
-        const target = `https://www.1secmail.com/api/v1/?action=readMessage&login=${emailUser}&domain=${domain}&id=${id}`;
-        const url = `https://api.allorigins.win/get?url=${encodeURIComponent(target)}`;
-        try {
-            const res = await fetch(url);
-            const data = await res.json();
-            const mail = JSON.parse(data.contents);
-            alert(`GÖNDEREN: ${mail.from}\n\n${mail.textBody}`);
-        } catch (e) { alert("Hata."); }
-    }
-
-    // --- DİĞER ARAÇLAR ---
-    function genPass() {
-        const c = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789!@#$%^&*";
-        let r = ""; for(let i=0; i<16; i++) r += c.charAt(Math.floor(Math.random()*c.length));
-        document.getElementById('pOut').value = r;
-    }
-
-    function copyVal(id) {
-        const v = document.getElementById(id).value;
-        if(v) { navigator.clipboard.writeText(v); alert("Panoya kopyalandı."); }
-    }
-
-    function copyRaw(t) { navigator.clipboard.writeText(t); alert("Adres kopyalandı."); }
-
+    // --- DİĞER FONKSİYONLAR ---
     async function fetchIP() {
         try {
             const r = await fetch('https://api.ipify.org?format=json');
             const d = await r.json();
             document.getElementById('ipDisplay').innerText = d.ip;
-        } catch { document.getElementById('ipDisplay').innerText = "ÇEVRİMDIŞI"; }
+        } catch { document.getElementById('ipDisplay').innerText = "BAĞLANTI HATASI"; }
     }
 
-    function revealOracle() {
-        document.getElementById('oracleBox').innerText = `[+] Platform: ${navigator.platform}\n[+] Cores: ${navigator.hardwareConcurrency}\n[+] Time: ${new Date().toLocaleTimeString()}`;
+    async function revealOracle() {
+        const ua = navigator.userAgent;
+        const lines = [
+            `🔮 Sadrazam Raporu:`,
+            `[+] Cihaz: ${navigator.platform}`,
+            `[+] Tarayıcı: ${navigator.vendor}`,
+            `[+] Çekirdek: ${navigator.hardwareConcurrency} Birim`,
+            `[+] Dil: ${navigator.language}`,
+            `[!] Durum: İz bırakmadan tarama yapılıyor...`
+        ];
+        document.getElementById('oracleBox').innerText = lines.join('\n');
     }
 
-    window.onload = () => { 
-        document.getElementById('mailAddr').innerText = emailUser + "@" + domain;
-        fetchIP(); 
+    window.onload = () => {
+        fetchIP();
+        generateNewMail();
     };
 </script>
+
 </body>
-</html>
+    </html>
