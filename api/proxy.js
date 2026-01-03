@@ -10,7 +10,6 @@ export default async function handler(req, res) {
 
   try {
     const action = req.query.action;
-
     if (!action) {
       return res.status(400).json({ error: "action missing" });
     }
@@ -18,43 +17,49 @@ export default async function handler(req, res) {
     let url = "";
     let options = { method: "GET", headers: {} };
 
-    // Body (POST için)
-    let body = {};
-    if (req.method === "POST") {
-      body = req.body || {};
-    }
-
-    // DOMAINS
+    // 1️⃣ DOMAINLER
     if (action === "domains") {
       url = "https://api.mail.tm/domains";
     }
 
-    // CREATE ACCOUNT
+    // 2️⃣ HESAP OLUŞTUR
     else if (action === "create") {
+      const { address, password } = req.query;
+      if (!address || !password) {
+        return res.status(400).json({ error: "address or password missing" });
+      }
+
       url = "https://api.mail.tm/accounts";
       options.method = "POST";
       options.headers["Content-Type"] = "application/json";
-      options.body = JSON.stringify(body);
+      options.body = JSON.stringify({ address, password });
     }
 
-    // TOKEN
+    // 3️⃣ TOKEN AL
     else if (action === "token") {
+      const { address, password } = req.query;
+      if (!address || !password) {
+        return res.status(400).json({ error: "address or password missing" });
+      }
+
       url = "https://api.mail.tm/token";
       options.method = "POST";
       options.headers["Content-Type"] = "application/json";
-      options.body = JSON.stringify(body);
+      options.body = JSON.stringify({ address, password });
     }
 
-    // MESSAGES
+    // 4️⃣ MAİLLER
     else if (action === "messages") {
-      const token = req.query.token;
-      if (!token) return res.status(400).json({ error: "token missing" });
+      const { token } = req.query;
+      if (!token) {
+        return res.status(400).json({ error: "token missing" });
+      }
 
       url = "https://api.mail.tm/messages";
       options.headers.Authorization = `Bearer ${token}`;
     }
 
-    // SINGLE MESSAGE
+    // 5️⃣ TEK MAİL
     else if (action === "message") {
       const { token, id } = req.query;
       if (!token || !id) {
@@ -69,17 +74,17 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "invalid action" });
     }
 
-    const r = await fetch(url, options);
-    const text = await r.text();
+    const response = await fetch(url, options);
+    const text = await response.text();
 
     try {
-      return res.status(r.status).json(JSON.parse(text));
+      return res.status(response.status).json(JSON.parse(text));
     } catch {
-      return res.status(r.status).send(text);
+      return res.status(response.status).send(text);
     }
 
   } catch (err) {
     console.error("PROXY ERROR:", err);
     return res.status(500).json({ error: err.message });
   }
-    }
+                                   }
