@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Sadrazam Security — Temp Mail</title>
+
+<style>
+:root {
+  --bg: #0a0d12;
+  --panel: #0f1420;
+  --green: #00ff9c;
+  --green-dim: #00c77a;
+  --border: #1e293b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #0f172a, #020617);
+  color: var(--green);
+  font-family: "JetBrains Mono", monospace;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* PANEL */
+.app {
+  width: 100%;
+  max-width: 900px;
+  background: linear-gradient(180deg, #020617, #020617);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 0 40px rgba(0,255,156,.12);
+  padding: 24px;
+}
+
+/* HEADER */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.logo {
+  font-size: 20px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.logo span {
+  color: white;
+}
+
+.status {
+  font-size: 12px;
+  color: var(--green-dim);
+}
+
+/* INPUT BAR */
+.control {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+input {
+  flex: 1;
+  background: #020617;
+  border: 1px solid var(--border);
+  color: var(--green);
+  padding: 12px;
+  border-radius: 8px;
+  outline: none;
+}
+
+button {
+  background: linear-gradient(135deg, #00ff9c, #00c77a);
+  color: #020617;
+  border: none;
+  padding: 12px 18px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover {
+  filter: brightness(1.1);
+}
+
+/* INBOX */
+.inbox {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  max-height: 420px;
+  overflow-y: auto;
+  background: #020617;
+}
+
+.mail {
+  padding: 12px;
+  border-bottom: 1px dashed var(--border);
+}
+
+.mail:last-child {
+  border-bottom: none;
+}
+
+.from {
+  font-weight: bold;
+}
+
+.subject {
+  color: white;
+  margin: 4px 0;
+}
+
+.date {
+  font-size: 11px;
+  opacity: .6;
+}
+
+.empty {
+  text-align: center;
+  opacity: .6;
+  padding: 40px;
+}
+
+/* FOOTER */
+.footer {
+  margin-top: 16px;
+  font-size: 11px;
+  opacity: .4;
+  text-align: right;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+  <div class="header">
+    <div class="logo">SADRAZAM <span>SECURITY</span></div>
+    <div class="status">SECURE TEMP MAIL</div>
+  </div>
+
+  <div class="control">
+    <input id="email" placeholder="temp@mail.domain">
+    <button onclick="loadInbox()">FETCH</button>
+  </div>
+
+  <div id="inbox" class="inbox">
+    <div class="empty">📭 Inbox boş</div>
+  </div>
+
+  <div class="footer">
+    © Sadrazam Security — Encrypted Channel
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
