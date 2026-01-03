@@ -16,20 +16,15 @@
 
         body { font-family: 'Consolas', monospace; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         .tool-card { background: #0a0a0a; border: 1px solid var(--border); padding: 30px; border-radius: 8px; width: 100%; max-width: 500px; border-left: 4px solid var(--accent); }
-        
         h2 { font-size: 1rem; color: var(--accent); text-transform: uppercase; letter-spacing: 2px; margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
-
         .mail-address { background: #000; padding: 15px; border: 1px dashed var(--accent); color: var(--accent); font-weight: bold; text-align: center; margin: 20px 0; word-break: break-all; font-size: 1.1rem; }
-        
         .btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 14px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; text-transform: uppercase; margin-bottom: 10px; outline: none; }
         .btn:hover { background: var(--accent); color: #000; box-shadow: 0 0 15px rgba(0, 255, 204, 0.4); }
         .btn-secondary { border-color: var(--orange); color: var(--orange); }
         .btn-secondary:hover { background: var(--orange); color: #000; }
-
         .inbox { height: 250px; border: 1px solid var(--border); background: #000; margin-top: 15px; overflow-y: auto; padding: 10px; font-size: 0.9rem; }
         .mail-item { padding: 12px; border-bottom: 1px solid #1a1a1a; cursor: pointer; transition: 0.2s; }
         .mail-item:hover { background: #0d0d0d; color: var(--accent); }
-
         .warning-footer { margin-top: 25px; padding: 15px; border: 1px solid rgba(255, 62, 62, 0.3); background: rgba(255, 62, 62, 0.05); color: var(--red); font-size: 0.75rem; text-align: center; letter-spacing: 1px; }
     </style>
 </head>
@@ -37,99 +32,108 @@
 
 <div class="tool-card">
     <h2>Dinamik Mail Servisi (Vercel Proxy)</h2>
-    
+
     <div id="mailAddr" class="mail-address">SİSTEM BEKLEMEDE...</div>
-    
     <button class="btn" onclick="generateNewMail()">YENİ ANONİM ADRES ÜRET</button>
-    
+
     <div class="inbox" id="mailInbox">
-        <div style="text-align: center; color: #444; padding: 20px;">Gelen kutusu taranıyor...</div>
+        <div style="text-align:center;color:#444;padding:20px;">Gelen kutusu taranıyor...</div>
     </div>
-    
-    <button class="btn btn-secondary" style="margin-top: 15px;" onclick="refreshInbox()">GELEN KUTUSUNU GÜNCELLE</button>
+
+    <button class="btn btn-secondary" style="margin-top:15px;" onclick="refreshInbox()">GELEN KUTUSUNU GÜNCELLE</button>
 
     <div class="warning-footer">
-        ⚠ UYARI: BU SERVİS GEÇİCİ İLETİŞİM İÇİNDİR. VERİLER TARAYICI KAPANDIĞINDA SİLİNİR. GÜVENLİĞİNİZ İÇİN KİŞİSEL BİLGİ PAYLAŞMAYIN.
+        ⚠ BU SERVİS GEÇİCİDİR. TARAYICI KAPANDIĞINDA VERİLER SİLİNİR.
     </div>
 </div>
 
 <script>
-    let currentToken = "";
-    let currentAddress = "";
+let currentToken = "";
+let currentAddress = "";
+let currentPassword = "";
 
-    // Vercel /api/proxy.js dosyasına istek atan fonksiyon
-    async function callProxy(endpoint, method = 'GET', body = null) {
-        const response = await fetch('/api/proxy', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ endpoint, method, body, token: currentToken })
+// 🔥 proxy.js ile birebir uyumlu
+async function callProxy(action, params = {}) {
+    const q = new URLSearchParams({ action, ...params }).toString();
+    const r = await fetch(`/api/proxy?${q}`);
+    if (!r.ok) throw new Error("Proxy error");
+    return await r.json();
+}
+
+async function generateNewMail() {
+    const addr = document.getElementById("mailAddr");
+    const inbox = document.getElementById("mailInbox");
+
+    addr.textContent = "OLUŞTURULUYOR...";
+    inbox.innerHTML = `<div style="text-align:center;color:var(--accent);padding:20px;">Bağlantı kuruluyor...</div>`;
+
+    try {
+        // 1️⃣ Domainler
+        const domains = await callProxy("domains");
+        const domain = domains["hydra:member"][0].domain;
+
+        // 2️⃣ Rastgele hesap
+        const user = Math.random().toString(36).slice(2, 10);
+        currentPassword = "pw_" + Math.random().toString(36).slice(2);
+        currentAddress = `${user}@${domain}`;
+
+        // 3️⃣ Hesap aç
+        await callProxy("create", {
+            address: currentAddress,
+            password: currentPassword
         });
-        if (!response.ok) throw new Error("Proxy hatası");
-        return await response.json();
+
+        // 4️⃣ Token
+        const tokenData = await callProxy("token", {
+            address: currentAddress,
+            password: currentPassword
+        });
+
+        currentToken = tokenData.token;
+        addr.textContent = currentAddress;
+        inbox.innerHTML = `<div style="text-align:center;color:#444;padding:20px;">Mail bekleniyor...</div>`;
+    } catch (e) {
+        addr.textContent = "HATA!";
+        inbox.innerHTML = `<div style="text-align:center;color:var(--red);padding:20px;">Proxy / API hatası</div>`;
+        console.error(e);
     }
+}
 
-    async function generateNewMail() {
-        const addrDiv = document.getElementById('mailAddr');
-        const inboxDiv = document.getElementById('mailInbox');
-        addrDiv.innerText = "BAĞLANTI KURULUYOR...";
+async function refreshInbox() {
+    if (!currentToken) return;
 
-        try {
-            // 1. Domain Al (Airs world filtreli)
-            const domains = await callProxy('/domains');
-            const validDomains = domains['hydra:member'].filter(d => !d.domain.includes('airs.world'));
-            const domain = validDomains[Math.floor(Math.random() * validDomains.length)].domain;
+    const inbox = document.getElementById("mailInbox");
+    inbox.innerHTML = `<div style="text-align:center;color:var(--orange);padding:20px;">Kontrol ediliyor...</div>`;
 
-            // 2. Rastgele Kimlik
-            const user = Math.random().toString(36).substring(2, 12);
-            const address = `${user}@${domain}`;
-            const password = "pw_" + Math.random().toString(36);
+    try {
+        const data = await callProxy("messages", { token: currentToken });
+        const msgs = data["hydra:member"];
 
-            // 3. Hesap Aç
-            await callProxy('/accounts', 'POST', { address, password });
-
-            // 4. Token Al
-            const tokenData = await callProxy('/token', 'POST', { address, password });
-
-            currentToken = tokenData.token;
-            currentAddress = address;
-
-            addrDiv.innerText = address;
-            inboxDiv.innerHTML = '<div style="text-align: center; color: var(--accent); padding: 20px;">Bağlantı başarılı. Sinyal bekleniyor...</div>';
-        } catch (err) {
-            addrDiv.innerText = "PROXY HATASI!";
-            inboxDiv.innerHTML = '<div style="text-align: center; color: var(--red); padding: 20px;">Sunucu dosyası (api/proxy.js) bulunamadı veya CORS engeli var.</div>';
+        if (!msgs.length) {
+            inbox.innerHTML = `<div style="text-align:center;color:#444;padding:20px;">Yeni mesaj yok</div>`;
+            return;
         }
-    }
 
-    async function refreshInbox() {
-        if (!currentToken) return;
-        const inbox = document.getElementById('mailInbox');
-        inbox.innerHTML = '<div style="text-align: center; color: var(--orange); padding: 20px;">Sorgulanıyor...</div>';
-
-        try {
-            const data = await callProxy('/messages');
-            const messages = data['hydra:member'];
-
-            if (messages.length === 0) {
-                inbox.innerHTML = '<div style="text-align: center; color: #444; padding: 20px;">Henüz yeni mesaj yok.</div>';
-            } else {
-                inbox.innerHTML = "";
-                messages.forEach(msg => {
-                    const item = document.createElement('div');
-                    item.className = 'mail-item';
-                    item.innerHTML = `<strong>${msg.subject || '(Konu Yok)'}</strong><br><small>${msg.from.address}</small>`;
-                    item.onclick = async () => {
-                        const content = await callProxy(`/messages/${msg.id}`);
-                        alert("MESAJ İÇERİĞİ:\n\n" + (content.text || "İçerik çekilemedi."));
-                    };
-                    inbox.appendChild(item);
+        inbox.innerHTML = "";
+        msgs.forEach(m => {
+            const div = document.createElement("div");
+            div.className = "mail-item";
+            div.innerHTML = `<strong>${m.subject || "(Konu yok)"}</strong><br><small>${m.from.address}</small>`;
+            div.onclick = async () => {
+                const msg = await callProxy("message", {
+                    token: currentToken,
+                    id: m.id
                 });
-            }
-        } catch (e) {
-            inbox.innerHTML = '<div style="text-align: center; color: var(--red); padding: 20px;">Sinyal tazelenemedi.</div>';
-        }
+                alert(msg.text || "İçerik yok");
+            };
+            inbox.appendChild(div);
+        });
+    } catch (e) {
+        inbox.innerHTML = `<div style="text-align:center;color:var(--red);padding:20px;">Inbox alınamadı</div>`;
     }
+}
 </script>
 
 </body>
 </html>
+
